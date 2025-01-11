@@ -17,16 +17,18 @@ func homehandler(w http.ResponseWriter, r *http.Request) {
 		Title:   "Home Page",
 		Message: "Hello World!",
 	}
+	RenderTemplate(w, "home", PageData)
+}
 
-	tmpl, err := template.ParseFiles("index.html")
+func RenderTemplate(w http.ResponseWriter, tmpl string, data PageData) {
+	t, err := template.ParseFiles(tmpl + ".html")
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = tmpl.Execute(w, PageData)
+	err = t.Execute(w, data)
 	if err != nil {
 		fmt.Println(err)
 	}
-
 }
 
 func main() {
