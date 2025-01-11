@@ -87,3 +87,13 @@ func (app *TodoApp) CreateList(name string) (int, error) {
 	id, err := result.LastInsertId()
 	return int(id), err
 }
+
+func (app *TodoApp) GetListName(listID int) (string, error) {
+	var name string
+	getListNameQuery := "SELECT name FROM lists WHERE id = ?"
+	err := app.DB.QueryRow(getListNameQuery, listID).Scan(&name)
+	if err != nil {
+		return "", err
+	}
+	return name, nil
+}

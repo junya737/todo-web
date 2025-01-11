@@ -73,7 +73,19 @@ func TodoListHandler(app *db.TodoApp) http.HandlerFunc {
 			return
 		}
 
-		PageData := PageData{Title: "TODO App", Todos: todos, ListID: listID}
+		// リスト名取得
+		listName, err := app.GetListName(listID)
+		if err != nil {
+			http.Error(w, "Error getting list name", http.StatusInternalServerError)
+			fmt.Printf("Error getting list name: %v\n", err)
+			return
+		}
+
+		PageData := PageData{
+			Title:  fmt.Sprintf("TODO List - %s", listName),
+			Todos:  todos,
+			ListID: listID,
+		}
 		utils.RenderTemplate(w, "todolist", PageData)
 	}
 }
