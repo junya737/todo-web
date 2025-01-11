@@ -21,13 +21,6 @@ type PageData struct {
 	Todos []Todo
 }
 
-var todos = []Todo{
-	{ID: 1, Description: "Learn Go", Completed: false},
-	{ID: 2, Description: "Build a TODO app", Completed: true},
-}
-
-var nextID = 3
-
 var db *sql.DB
 
 func initDB() error {
@@ -52,9 +45,52 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		handleToggleTodo(r)
 		handleDeleteTodo(r)
 	}
+	todos, err := getTodos()
+	if err != nil {
+		http.Error(w, "Error getting todos", http.StatusInternalServerError)
+		fmt.Printf("Error getting todos: %v\n", err)
+		return
+	}
 
 	PageData := PageData{Title: "TODO App", Todos: todos}
 	RenderTemplate(w, "home", PageData)
+}
+
+func getTodos() ([]Todo, error) {
+	rows, err := db.Query("SELECT id, description, completed FROM todos")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var todos []Todo
+	for rows.Next() {
+		var todo Todo
+		err := rows.Scan(&todo.ID, &todo.Description, &todo.Completed)
+		if err != nil {
+			return nil, err
+		}
+		todos = append(todos, todo)
+	}
+	return todos, nil
+}
+
+func addTodo(description string) error {
+	insertTodoQuery := "INSERT INTO todos (description, completed) VALUES (?, ?)"
+	_, err := db.Exec(insertTodoQuery, description, false)
+	return err
+}
+
+func toggleTodo(id int) error {
+	toggleTodoQuery := "UPDATE todos SET completed = NOT completed WHERE id = ?"
+	_, err := db.Exec(toggleTodoQuery, id)
+	return err
+}
+
+func deleteTodo(id int) error {
+	deleteTodoQuery := "DELETE FROM todos WHERE id = ?"
+	_, err := db.Exec(deleteTodoQuery, id)
+	return err
 }
 
 func handleAddTodo(r *http.Request) {
@@ -62,13 +98,10 @@ func handleAddTodo(r *http.Request) {
 	if description == "" {
 		return
 	}
-	newTodo := Todo{
-		ID:          nextID,
-		Description: description,
-		Completed:   false,
+	err := addTodo(description)
+	if err != nil {
+		fmt.Printf("Error adding todo to database: %v\n", err)
 	}
-	nextID++
-	todos = append(todos, newTodo)
 }
 
 func handleToggleTodo(r *http.Request) {
@@ -81,13 +114,11 @@ func handleToggleTodo(r *http.Request) {
 		fmt.Printf("Error converting toggleID to int: %v\n", err)
 		return
 	}
-
-	for i, todo := range todos {
-		if todo.ID == id {
-			todos[i].Completed = !todo.Completed
-			break
-		}
+	err = toggleTodo(id)
+	if err != nil {
+		fmt.Printf("Error toggling todo in database: %v\n", err)
 	}
+
 }
 
 func handleDeleteTodo(r *http.Request) {
@@ -101,12 +132,11 @@ func handleDeleteTodo(r *http.Request) {
 		fmt.Printf("Error converting deleteID to int: %v\n", err)
 		return
 	}
-	for i, todo := range todos {
-		if todo.ID == id {
-			todos = append(todos[:i], todos[i+1:]...)
-			break
-		}
+	err = deleteTodo(id)
+	if err != nil {
+		fmt.Printf("Error deleting todo from database: %v\n", err)
 	}
+
 }
 
 func RenderTemplate(w http.ResponseWriter, tmpl string, data PageData) {
