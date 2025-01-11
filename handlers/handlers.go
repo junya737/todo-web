@@ -15,25 +15,52 @@ type PageData struct {
 	ListID int
 }
 
-const listID = 1
-
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	PageData := PageData{Title: "TODO App"}
 	utils.RenderTemplate(w, "home", PageData)
 }
 
+func CreateListHandler(app *db.TodoApp) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			listName := r.FormValue("list_name")
+			if listName == "" {
+				return
+			}
+			listID, err := app.CreateList(listName)
+			if err != nil {
+				http.Error(w, "Error creating list", http.StatusInternalServerError)
+				fmt.Printf("Error creating list: %v\n", err)
+				return
+			}
+			http.Redirect(w, r, fmt.Sprintf("/todo/%d", listID), http.StatusSeeOther)
+			return
+		}
+		PageData := PageData{Title: "Create List"}
+		utils.RenderTemplate(w, "create_list", PageData)
+	}
+}
+
 func TodoListHandler(app *db.TodoApp) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		//urlからlistIDを取得
+		listIDStr := r.URL.Path[len("/todo/"):]
+		listID, err := strconv.Atoi(listIDStr)
+		if err != nil {
+			http.Error(w, "Invalid List ID", http.StatusBadRequest)
+			return
+		}
 
 		if r.Method == http.MethodPost {
 			action := r.FormValue("action")
 			switch action {
 			case "add":
-				HandleAddTodo(app, r)
+				HandleAddTodo(app, r, listID)
 			case "toggle":
-				HandleToggleTodo(app, r)
+				HandleToggleTodo(app, r, listID)
 			case "delete":
-				HandleDeleteTodo(app, r)
+				HandleDeleteTodo(app, r, listID)
 			default:
 				http.Error(w, "Invalid action", http.StatusBadRequest)
 				return
@@ -51,7 +78,7 @@ func TodoListHandler(app *db.TodoApp) http.HandlerFunc {
 	}
 }
 
-func HandleAddTodo(app *db.TodoApp, r *http.Request) {
+func HandleAddTodo(app *db.TodoApp, r *http.Request, listID int) {
 	description := r.FormValue("description")
 	if description == "" {
 		return
@@ -62,7 +89,7 @@ func HandleAddTodo(app *db.TodoApp, r *http.Request) {
 	}
 }
 
-func HandleToggleTodo(app *db.TodoApp, r *http.Request) {
+func HandleToggleTodo(app *db.TodoApp, r *http.Request, listID int) {
 	toggleID := r.FormValue("toggle")
 	if toggleID == "" {
 		return
@@ -78,7 +105,7 @@ func HandleToggleTodo(app *db.TodoApp, r *http.Request) {
 	}
 }
 
-func HandleDeleteTodo(app *db.TodoApp, r *http.Request) {
+func HandleDeleteTodo(app *db.TodoApp, r *http.Request, listID int) {
 	deleteID := r.FormValue("delete")
 	if deleteID == "" {
 		return

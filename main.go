@@ -25,7 +25,7 @@ func main() {
 		fmt.Printf("Error initializing database: %v\n", err)
 		return
 	}
-	http.HandleFunc("/", handlers.HomeHandler)
+	http.HandleFunc("/", handlers.CreateListHandler(app))
 	http.HandleFunc("/todo/", handlers.TodoListHandler(app))
 	fmt.Println("Server is running at http://localhost:8080")
 	http.ListenAndServe(":8080", nil)

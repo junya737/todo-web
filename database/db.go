@@ -77,3 +77,13 @@ func (app *TodoApp) DeleteTodo(id int, listID int) error {
 	_, err := app.DB.Exec(deleteTodoQuery, id, listID)
 	return err
 }
+
+func (app *TodoApp) CreateList(name string) (int, error) {
+	createListQuery := "INSERT INTO lists (name) VALUES (?)"
+	result, err := app.DB.Exec(createListQuery, name)
+	if err != nil {
+		return 0, err
+	}
+	id, err := result.LastInsertId()
+	return int(id), err
+}

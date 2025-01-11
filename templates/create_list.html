@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+</head>
+<body>
+  <h1>{{.Title}}</h1>
+
+  <!-- リスト作成フォーム -->
+  <form action="/" method="post">
+    <label for="list_name">List Name:</label>
+    <input type="text" id="list_name" name="list_name" required>
+    <button type="submit">Create List</button>
+  </form>
+</body>
+</html>
