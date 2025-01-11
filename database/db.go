@@ -17,13 +17,26 @@ type TodoApp struct {
 }
 
 func (app *TodoApp) InitDB() error {
-	createTableQuery := `
+	createTodosTableQuery := `
 	CREATE TABLE IF NOT EXISTS todos (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		description TEXT NOT NULL,
-		completed BOOLEAN NOT NULL
+		completed BOOLEAN NOT NULL,
+		list_id INTEGER NOT NULL,
+		FOREIGN KEY (list_id) REFERENCES lists(id)
 	);`
-	_, err := app.DB.Exec(createTableQuery)
+	_, err := app.DB.Exec(createTodosTableQuery)
+	if err != nil {
+		return err
+	}
+
+	// リストテーブルの作成
+	createListsTableQuery := `
+	CREATE TABLE IF NOT EXISTS lists (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL
+	);`
+	_, err = app.DB.Exec(createListsTableQuery)
 	return err
 }
 
