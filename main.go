@@ -21,31 +21,28 @@ type PageData struct {
 	Todos []Todo
 }
 
-var db *sql.DB
+type TodoApp struct {
+	DB *sql.DB
+}
 
-func initDB() error {
-	var err error
-	db, err = sql.Open("sqlite3", "./todos.db")
-	if err != nil {
-		return err
-	}
+func (app *TodoApp) initDB() error {
 	createTableQuery := `
 	CREATE TABLE IF NOT EXISTS todos (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		description TEXT NOT NULL,
 		completed BOOLEAN NOT NULL
 	);`
-	_, err = db.Exec(createTableQuery)
+	_, err := app.DB.Exec(createTableQuery)
 	return err
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
+func (app *TodoApp) homeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		handleAddTodo(r)
-		handleToggleTodo(r)
-		handleDeleteTodo(r)
+		app.handleAddTodo(r)
+		app.handleToggleTodo(r)
+		app.handleDeleteTodo(r)
 	}
-	todos, err := getTodos()
+	todos, err := app.getTodos()
 	if err != nil {
 		http.Error(w, "Error getting todos", http.StatusInternalServerError)
 		fmt.Printf("Error getting todos: %v\n", err)
@@ -56,8 +53,8 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	RenderTemplate(w, "home", PageData)
 }
 
-func getTodos() ([]Todo, error) {
-	rows, err := db.Query("SELECT id, description, completed FROM todos")
+func (app *TodoApp) getTodos() ([]Todo, error) {
+	rows, err := app.DB.Query("SELECT id, description, completed FROM todos")
 	if err != nil {
 		return nil, err
 	}
@@ -75,36 +72,36 @@ func getTodos() ([]Todo, error) {
 	return todos, nil
 }
 
-func addTodo(description string) error {
+func (app *TodoApp) addTodo(description string) error {
 	insertTodoQuery := "INSERT INTO todos (description, completed) VALUES (?, ?)"
-	_, err := db.Exec(insertTodoQuery, description, false)
+	_, err := app.DB.Exec(insertTodoQuery, description, false)
 	return err
 }
 
-func toggleTodo(id int) error {
+func (app *TodoApp) toggleTodo(id int) error {
 	toggleTodoQuery := "UPDATE todos SET completed = NOT completed WHERE id = ?"
-	_, err := db.Exec(toggleTodoQuery, id)
+	_, err := app.DB.Exec(toggleTodoQuery, id)
 	return err
 }
 
-func deleteTodo(id int) error {
+func (app *TodoApp) deleteTodo(id int) error {
 	deleteTodoQuery := "DELETE FROM todos WHERE id = ?"
-	_, err := db.Exec(deleteTodoQuery, id)
+	_, err := app.DB.Exec(deleteTodoQuery, id)
 	return err
 }
 
-func handleAddTodo(r *http.Request) {
+func (app *TodoApp) handleAddTodo(r *http.Request) {
 	description := r.FormValue("description")
 	if description == "" {
 		return
 	}
-	err := addTodo(description)
+	err := app.addTodo(description)
 	if err != nil {
 		fmt.Printf("Error adding todo to database: %v\n", err)
 	}
 }
 
-func handleToggleTodo(r *http.Request) {
+func (app *TodoApp) handleToggleTodo(r *http.Request) {
 	toggleID := r.FormValue("toggle")
 	if toggleID == "" {
 		return
@@ -114,14 +111,13 @@ func handleToggleTodo(r *http.Request) {
 		fmt.Printf("Error converting toggleID to int: %v\n", err)
 		return
 	}
-	err = toggleTodo(id)
+	err = app.toggleTodo(id)
 	if err != nil {
 		fmt.Printf("Error toggling todo in database: %v\n", err)
 	}
-
 }
 
-func handleDeleteTodo(r *http.Request) {
+func (app *TodoApp) handleDeleteTodo(r *http.Request) {
 	deleteID := r.FormValue("delete")
 
 	if deleteID == "" {
@@ -132,7 +128,7 @@ func handleDeleteTodo(r *http.Request) {
 		fmt.Printf("Error converting deleteID to int: %v\n", err)
 		return
 	}
-	err = deleteTodo(id)
+	err = app.deleteTodo(id)
 	if err != nil {
 		fmt.Printf("Error deleting todo from database: %v\n", err)
 	}
@@ -155,14 +151,22 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, data PageData) {
 }
 
 func main() {
-	err := initDB()
+
+	db, err := sql.Open("sqlite3", "./todos.db")
+	if err != nil {
+		fmt.Printf("Error opening database: %v\n", err)
+		return
+	}
+	defer db.Close()
+	app := TodoApp{DB: db}
+
+	err = app.initDB()
 	if err != nil {
 		fmt.Printf("Error initializing database: %v\n", err)
 		return
 	}
-	defer db.Close()
 
-	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/", app.homeHandler)
 	fmt.Println("Server is runnning at http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
