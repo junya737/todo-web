@@ -26,8 +26,18 @@ var todos = []Todo{
 var nextID = 3
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost && r.FormValue("description") != "" {
-		description := r.FormValue("description")
+	if r.Method == http.MethodPost {
+		AddTodo(r)
+		ToogleTodo(r)
+	}
+
+	PageData := PageData{Title: "TODO App", Todos: todos}
+	RenderTemplate(w, "home", PageData)
+}
+
+func AddTodo(r *http.Request) {
+	description := r.FormValue("description")
+	if description != "" {
 		newTodo := Todo{
 			ID:          nextID,
 			Description: description,
@@ -35,11 +45,13 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		nextID++
 		todos = append(todos, newTodo)
-
 	}
+}
 
-	if r.Method == http.MethodPost && r.FormValue("toggle") != "" {
-		id, err := strconv.Atoi(r.FormValue("toggle"))
+func ToogleTodo(r *http.Request) {
+	toggleID := r.FormValue("toggle")
+	if toggleID != "" {
+		id, err := strconv.Atoi(toggleID)
 		if err == nil {
 			for i, todo := range todos {
 				if todo.ID == id {
@@ -49,8 +61,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	PageData := PageData{Title: "TODO App", Todos: todos}
-	RenderTemplate(w, "home", PageData)
 }
 
 func RenderTemplate(w http.ResponseWriter, tmpl string, data PageData) {
