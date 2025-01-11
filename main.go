@@ -17,18 +17,23 @@ type PageData struct {
 	Todos []Todo
 }
 
+var todos = []Todo{
+	{ID: 1, Description: "Learn Go", Completed: false},
+	{ID: 2, Description: "Build a TODO app", Completed: true},
+}
+
+var nextID = 3
+
 func homehandler(w http.ResponseWriter, r *http.Request) {
-
-	todos := []Todo{
-		{ID: 1, Description: "Learn Go", Completed: false},
-		{ID: 2, Description: "Build a TODO app", Completed: true},
-		{ID: 3, Description: "Master HTML Templates", Completed: false},
+	if r.Method == http.MethodPost {
+		description := r.FormValue("description")
+		if description != "" {
+			newTodo := Todo{ID: nextID, Description: description, Completed: false}
+			nextID++
+			todos = append(todos, newTodo)
+		}
 	}
-
-	PageData := PageData{
-		Title: "TODO List",
-		Todos: todos,
-	}
+	PageData := PageData{Title: "TODO App", Todos: todos}
 	RenderTemplate(w, "home", PageData)
 }
 
