@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Todo struct {
@@ -24,6 +27,24 @@ var todos = []Todo{
 }
 
 var nextID = 3
+
+var db *sql.DB
+
+func initDB() error {
+	var err error
+	db, err = sql.Open("sqlite3", "./todos.db")
+	if err != nil {
+		return err
+	}
+	createTableQuery := `
+	CREATE TABLE IF NOT EXISTS todos (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		description TEXT NOT NULL,
+		completed BOOLEAN NOT NULL
+	);`
+	_, err = db.Exec(createTableQuery)
+	return err
+}
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
@@ -67,7 +88,6 @@ func handleToggleTodo(r *http.Request) {
 			break
 		}
 	}
-
 }
 
 func handleDeleteTodo(r *http.Request) {
@@ -105,6 +125,13 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, data PageData) {
 }
 
 func main() {
+	err := initDB()
+	if err != nil {
+		fmt.Printf("Error initializing database: %v\n", err)
+		return
+	}
+	defer db.Close()
+
 	http.HandleFunc("/", homeHandler)
 	fmt.Println("Server is runnning at http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
