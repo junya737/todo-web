@@ -36,21 +36,25 @@ func (app *TodoApp) initDB() error {
 	return err
 }
 
-func (app *TodoApp) homeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		app.handleAddTodo(r)
-		app.handleToggleTodo(r)
-		app.handleDeleteTodo(r)
-	}
-	todos, err := app.getTodos()
-	if err != nil {
-		http.Error(w, "Error getting todos", http.StatusInternalServerError)
-		fmt.Printf("Error getting todos: %v\n", err)
-		return
-	}
+// appを参照できるように無名関数でクロージャを作る必要あり．
+// 呼び出し元がfunc(w http.ResponseWriter, r *http.Request)型の関数を要求しているため．
+func homeHandler(app *TodoApp) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			handleAddTodo(app, r)
+			handleToggleTodo(app, r)
+			handleDeleteTodo(app, r)
+		}
+		todos, err := app.getTodos()
+		if err != nil {
+			http.Error(w, "Error getting todos", http.StatusInternalServerError)
+			fmt.Printf("Error getting todos: %v\n", err)
+			return
+		}
 
-	PageData := PageData{Title: "TODO App", Todos: todos}
-	RenderTemplate(w, "home", PageData)
+		PageData := PageData{Title: "TODO App", Todos: todos}
+		RenderTemplate(w, "home", PageData)
+	}
 }
 
 func (app *TodoApp) getTodos() ([]Todo, error) {
@@ -90,7 +94,7 @@ func (app *TodoApp) deleteTodo(id int) error {
 	return err
 }
 
-func (app *TodoApp) handleAddTodo(r *http.Request) {
+func handleAddTodo(app *TodoApp, r *http.Request) {
 	description := r.FormValue("description")
 	if description == "" {
 		return
@@ -101,7 +105,7 @@ func (app *TodoApp) handleAddTodo(r *http.Request) {
 	}
 }
 
-func (app *TodoApp) handleToggleTodo(r *http.Request) {
+func handleToggleTodo(app *TodoApp, r *http.Request) {
 	toggleID := r.FormValue("toggle")
 	if toggleID == "" {
 		return
@@ -117,7 +121,7 @@ func (app *TodoApp) handleToggleTodo(r *http.Request) {
 	}
 }
 
-func (app *TodoApp) handleDeleteTodo(r *http.Request) {
+func handleDeleteTodo(app *TodoApp, r *http.Request) {
 	deleteID := r.FormValue("delete")
 
 	if deleteID == "" {
@@ -158,7 +162,7 @@ func main() {
 		return
 	}
 	defer db.Close()
-	app := TodoApp{DB: db}
+	app := &TodoApp{DB: db}
 
 	err = app.initDB()
 	if err != nil {
@@ -166,7 +170,7 @@ func main() {
 		return
 	}
 
-	http.HandleFunc("/", app.homeHandler)
+	http.HandleFunc("/", homeHandler(app))
 	fmt.Println("Server is runnning at http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
