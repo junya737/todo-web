@@ -28,7 +28,8 @@ var nextID = 3
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		AddTodo(r)
-		ToogleTodo(r)
+		TogleTodo(r)
+		DeleteTodo(r)
 	}
 
 	PageData := PageData{Title: "TODO App", Todos: todos}
@@ -48,7 +49,7 @@ func AddTodo(r *http.Request) {
 	}
 }
 
-func ToogleTodo(r *http.Request) {
+func TogleTodo(r *http.Request) {
 	toggleID := r.FormValue("toggle")
 	if toggleID != "" {
 		id, err := strconv.Atoi(toggleID)
@@ -56,6 +57,21 @@ func ToogleTodo(r *http.Request) {
 			for i, todo := range todos {
 				if todo.ID == id {
 					todos[i].Completed = !todo.Completed
+					break
+				}
+			}
+		}
+	}
+}
+
+func DeleteTodo(r *http.Request) {
+	deleteID := r.FormValue("delete")
+	if deleteID != "" {
+		id, err := strconv.Atoi(deleteID)
+		if err == nil {
+			for i, todo := range todos {
+				if todo.ID == id {
+					todos = append(todos[:i], todos[i+1:]...)
 					break
 				}
 			}

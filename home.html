@@ -18,16 +18,18 @@
   <ul>
     {{range .Todos}}
       <li>
-        {{.Description}} - 
-        {{if .Completed}}
-          <strong>Completed</strong>
-        {{else}}
-          Pending
-        {{end}}
+        {{.Description}} - {{if .Completed}}<strong>Completed</strong>{{else}}Pending{{end}}
+
         <!-- 完了状態の切り替えボタン -->
         <form action="/" method="post" style="display:inline;">
           <input type="hidden" name="toggle" value="{{.ID}}">
           <button type="submit">Toggle</button>
+        </form>
+
+        <!-- 削除ボタン -->
+        <form action="/" method="post" style="display:inline;">
+          <input type="hidden" name="delete" value="{{.ID}}">
+          <button type="submit">Delete</button>
         </form>
       </li>
     {{end}}
