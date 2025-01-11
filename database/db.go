@@ -6,6 +6,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+var listID = 0
+
 type Todo struct {
 	ID          int
 	Description string
@@ -41,7 +43,8 @@ func (app *TodoApp) InitDB() error {
 }
 
 func (app *TodoApp) GetTodos() ([]Todo, error) {
-	rows, err := app.DB.Query("SELECT id, description, completed FROM todos")
+	getTodoQuery := "SELECT id, description, completed FROM todos WHERE list_id = ?"
+	rows, err := app.DB.Query(getTodoQuery, listID)
 	if err != nil {
 		return nil, err
 	}
@@ -60,19 +63,19 @@ func (app *TodoApp) GetTodos() ([]Todo, error) {
 }
 
 func (app *TodoApp) AddTodo(description string) error {
-	insertTodoQuery := "INSERT INTO todos (description, completed) VALUES (?, ?)"
-	_, err := app.DB.Exec(insertTodoQuery, description, false)
+	insertTodoQuery := "INSERT INTO todos (description, completed, list_id) VALUES (?, ?, ?)"
+	_, err := app.DB.Exec(insertTodoQuery, description, false, listID)
 	return err
 }
 
 func (app *TodoApp) ToggleTodo(id int) error {
-	toggleTodoQuery := "UPDATE todos SET completed = NOT completed WHERE id = ?"
-	_, err := app.DB.Exec(toggleTodoQuery, id)
+	toggleTodoQuery := "UPDATE todos SET completed = NOT completed WHERE id = ? AND list_id = ?"
+	_, err := app.DB.Exec(toggleTodoQuery, id, listID)
 	return err
 }
 
 func (app *TodoApp) DeleteTodo(id int) error {
-	deleteTodoQuery := "DELETE FROM todos WHERE id = ?"
-	_, err := app.DB.Exec(deleteTodoQuery, id)
+	deleteTodoQuery := "DELETE FROM todos WHERE id = ? AND list_id = ?"
+	_, err := app.DB.Exec(deleteTodoQuery, id, listID)
 	return err
 }
