@@ -18,7 +18,17 @@
   <ul>
     {{range .Todos}}
       <li>
-        {{.Description}} - {{if .Completed}}<strong>Completed</strong>{{else}}Pending{{end}}
+        {{.Description}} - 
+        {{if .Completed}}
+          <strong>Completed</strong>
+        {{else}}
+          Pending
+        {{end}}
+        <!-- 完了状態の切り替えボタン -->
+        <form action="/" method="post" style="display:inline;">
+          <input type="hidden" name="toggle" value="{{.ID}}">
+          <button type="submit">Toggle</button>
+        </form>
       </li>
     {{end}}
   </ul>

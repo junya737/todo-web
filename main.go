@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 )
 
 type Todo struct {
@@ -24,13 +25,28 @@ var todos = []Todo{
 
 var nextID = 3
 
-func homehandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost && r.FormValue("description") != "" {
 		description := r.FormValue("description")
-		if description != "" {
-			newTodo := Todo{ID: nextID, Description: description, Completed: false}
-			nextID++
-			todos = append(todos, newTodo)
+		newTodo := Todo{
+			ID:          nextID,
+			Description: description,
+			Completed:   false,
+		}
+		nextID++
+		todos = append(todos, newTodo)
+
+	}
+
+	if r.Method == http.MethodPost && r.FormValue("toggle") != "" {
+		id, err := strconv.Atoi(r.FormValue("toggle"))
+		if err == nil {
+			for i, todo := range todos {
+				if todo.ID == id {
+					todos[i].Completed = !todo.Completed
+					break
+				}
+			}
 		}
 	}
 	PageData := PageData{Title: "TODO App", Todos: todos}
@@ -52,7 +68,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, data PageData) {
 }
 
 func main() {
-	http.HandleFunc("/", homehandler)
+	http.HandleFunc("/", homeHandler)
 	fmt.Println("Server is runnning at http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
