@@ -24,10 +24,20 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 func TodoListHandler(app *db.TodoApp) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		if r.Method == http.MethodPost {
-			HandleAddTodo(app, r)
-			HandleToggleTodo(app, r)
-			HandleDeleteTodo(app, r)
+			action := r.FormValue("action")
+			switch action {
+			case "add":
+				HandleAddTodo(app, r)
+			case "toggle":
+				HandleToggleTodo(app, r)
+			case "delete":
+				HandleDeleteTodo(app, r)
+			default:
+				http.Error(w, "Invalid action", http.StatusBadRequest)
+				return
+			}
 		}
 		todos, err := app.GetTodos(listID)
 		if err != nil {
@@ -36,7 +46,7 @@ func TodoListHandler(app *db.TodoApp) http.HandlerFunc {
 			return
 		}
 
-		PageData := PageData{Title: "TODO App", Todos: todos}
+		PageData := PageData{Title: "TODO App", Todos: todos, ListID: listID}
 		utils.RenderTemplate(w, "todolist", PageData)
 	}
 }

@@ -10,7 +10,8 @@
 
   <!-- Add TODO Form -->
   <h2>Add a new TODO</h2>
-  <form action="" method="post">
+  <form action="/todo/{{.ListID}}" method="post">
+    <input type="hidden" name="action" value="add">
     <input type="text" name="description" placeholder="New TODO" required>
     <button type="submit">Add</button>
   </form>
@@ -21,11 +22,13 @@
     {{range .Todos}}
     <li>
       {{.Description}}
-      <form action="" method="post" style="display:inline;">
+      <form action="/todo/{{$.ListID}}" method="post" style="display:inline;">
+        <input type="hidden" name="action" value="toggle">
         <input type="hidden" name="toggle" value="{{.ID}}">
         <button type="submit">{{if .Completed}}Completed{{else}}Pending{{end}}</button>
       </form>
-      <form action="" method="post" style="display:inline;">
+      <form action="/todo/{{$.ListID}}" method="post" style="display:inline;">
+        <input type="hidden" name="action" value="delete">
         <input type="hidden" name="delete" value="{{.ID}}">
         <button type="submit">Delete</button>
       </form>
