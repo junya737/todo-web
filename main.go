@@ -6,16 +6,28 @@ import (
 	"net/http"
 )
 
+type Todo struct {
+	ID          int
+	Description string
+	Completed   bool
+}
+
 type PageData struct {
-	Title   string
-	Message string
+	Title string
+	Todos []Todo
 }
 
 func homehandler(w http.ResponseWriter, r *http.Request) {
 
+	todos := []Todo{
+		{ID: 1, Description: "Learn Go", Completed: false},
+		{ID: 2, Description: "Build a TODO app", Completed: true},
+		{ID: 3, Description: "Master HTML Templates", Completed: false},
+	}
+
 	PageData := PageData{
-		Title:   "Home Page",
-		Message: "Hello World!",
+		Title: "TODO List",
+		Todos: todos,
 	}
 	RenderTemplate(w, "home", PageData)
 }
@@ -23,10 +35,13 @@ func homehandler(w http.ResponseWriter, r *http.Request) {
 func RenderTemplate(w http.ResponseWriter, tmpl string, data PageData) {
 	t, err := template.ParseFiles(tmpl + ".html")
 	if err != nil {
+		http.Error(w, "Error loading template", http.StatusInternalServerError)
 		fmt.Println(err)
+		return
 	}
 	err = t.Execute(w, data)
 	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		fmt.Println(err)
 	}
 }
