@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+</head>
+<body>
+  <h1>{{.Title}}</h1>
+
+  <!-- Add TODO Form -->
+  <h2>Add a new TODO</h2>
+  <form action="" method="post">
+    <input type="text" name="description" placeholder="New TODO" required>
+    <button type="submit">Add</button>
+  </form>
+
+  <!-- TODO List -->
+  <h2>TODO List</h2>
+  <ul>
+    {{range .Todos}}
+    <li>
+      {{.Description}}
+      <form action="" method="post" style="display:inline;">
+        <input type="hidden" name="toggle" value="{{.ID}}">
+        <button type="submit">{{if .Completed}}Completed{{else}}Pending{{end}}</button>
+      </form>
+      <form action="" method="post" style="display:inline;">
+        <input type="hidden" name="delete" value="{{.ID}}">
+        <button type="submit">Delete</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+</body>
+</html>
