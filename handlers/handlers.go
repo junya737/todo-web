@@ -10,9 +10,12 @@ import (
 )
 
 type PageData struct {
-	Title string
-	Todos []db.Todo
+	Title  string
+	Todos  []db.Todo
+	ListID int
 }
+
+const listID = 1
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	PageData := PageData{Title: "TODO App"}
@@ -26,7 +29,7 @@ func TodoListHandler(app *db.TodoApp) http.HandlerFunc {
 			HandleToggleTodo(app, r)
 			HandleDeleteTodo(app, r)
 		}
-		todos, err := app.GetTodos()
+		todos, err := app.GetTodos(listID)
 		if err != nil {
 			http.Error(w, "Error getting todos", http.StatusInternalServerError)
 			fmt.Printf("Error getting todos: %v\n", err)
@@ -43,7 +46,7 @@ func HandleAddTodo(app *db.TodoApp, r *http.Request) {
 	if description == "" {
 		return
 	}
-	err := app.AddTodo(description)
+	err := app.AddTodo(description, listID)
 	if err != nil {
 		fmt.Printf("Error adding todo: %v\n", err)
 	}
@@ -59,7 +62,7 @@ func HandleToggleTodo(app *db.TodoApp, r *http.Request) {
 		fmt.Printf("Error converting toggleID to int: %v\n", err)
 		return
 	}
-	err = app.ToggleTodo(id)
+	err = app.ToggleTodo(id, listID)
 	if err != nil {
 		fmt.Printf("Error toggling todo: %v\n", err)
 	}
@@ -75,7 +78,7 @@ func HandleDeleteTodo(app *db.TodoApp, r *http.Request) {
 		fmt.Printf("Error converting deleteID to int: %v\n", err)
 		return
 	}
-	err = app.DeleteTodo(id)
+	err = app.DeleteTodo(id, listID)
 	if err != nil {
 		fmt.Printf("Error deleting todo: %v\n", err)
 	}

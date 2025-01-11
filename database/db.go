@@ -6,8 +6,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var listID = 0
-
 type Todo struct {
 	ID          int
 	Description string
@@ -42,7 +40,7 @@ func (app *TodoApp) InitDB() error {
 	return err
 }
 
-func (app *TodoApp) GetTodos() ([]Todo, error) {
+func (app *TodoApp) GetTodos(listID int) ([]Todo, error) {
 	getTodoQuery := "SELECT id, description, completed FROM todos WHERE list_id = ?"
 	rows, err := app.DB.Query(getTodoQuery, listID)
 	if err != nil {
@@ -62,19 +60,19 @@ func (app *TodoApp) GetTodos() ([]Todo, error) {
 	return todos, nil
 }
 
-func (app *TodoApp) AddTodo(description string) error {
+func (app *TodoApp) AddTodo(description string, listID int) error {
 	insertTodoQuery := "INSERT INTO todos (description, completed, list_id) VALUES (?, ?, ?)"
 	_, err := app.DB.Exec(insertTodoQuery, description, false, listID)
 	return err
 }
 
-func (app *TodoApp) ToggleTodo(id int) error {
+func (app *TodoApp) ToggleTodo(id int, listID int) error {
 	toggleTodoQuery := "UPDATE todos SET completed = NOT completed WHERE id = ? AND list_id = ?"
 	_, err := app.DB.Exec(toggleTodoQuery, id, listID)
 	return err
 }
 
-func (app *TodoApp) DeleteTodo(id int) error {
+func (app *TodoApp) DeleteTodo(id int, listID int) error {
 	deleteTodoQuery := "DELETE FROM todos WHERE id = ? AND list_id = ?"
 	_, err := app.DB.Exec(deleteTodoQuery, id, listID)
 	return err
