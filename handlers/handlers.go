@@ -14,7 +14,12 @@ type PageData struct {
 	Todos []db.Todo
 }
 
-func HomeHandler(app *db.TodoApp) http.HandlerFunc {
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	PageData := PageData{Title: "TODO App"}
+	utils.RenderTemplate(w, "home", PageData)
+}
+
+func TodoListHandler(app *db.TodoApp) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			HandleAddTodo(app, r)
@@ -29,7 +34,7 @@ func HomeHandler(app *db.TodoApp) http.HandlerFunc {
 		}
 
 		PageData := PageData{Title: "TODO App", Todos: todos}
-		utils.RenderTemplate(w, "home", PageData)
+		utils.RenderTemplate(w, "todolist", PageData)
 	}
 }
 

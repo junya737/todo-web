@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// データベース接続
-	dbConn, err := sql.Open("sqlite3", "./database/todos.db")
+	dbConn, err := sql.Open("sqlite3", "./database/data.db")
 	if err != nil {
 		fmt.Printf("Error opening database: %v\n", err)
 		return
@@ -25,8 +25,8 @@ func main() {
 		fmt.Printf("Error initializing database: %v\n", err)
 		return
 	}
-
-	http.HandleFunc("/", handlers.HomeHandler(app))
+	http.HandleFunc("/", handlers.HomeHandler)
+	http.HandleFunc("/todo/", handlers.TodoListHandler(app))
 	fmt.Println("Server is running at http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
