@@ -27,54 +27,64 @@ var nextID = 3
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		AddTodo(r)
-		TogleTodo(r)
-		DeleteTodo(r)
+		handleAddTodo(r)
+		handleToggleTodo(r)
+		handleDeleteTodo(r)
 	}
 
 	PageData := PageData{Title: "TODO App", Todos: todos}
 	RenderTemplate(w, "home", PageData)
 }
 
-func AddTodo(r *http.Request) {
+func handleAddTodo(r *http.Request) {
 	description := r.FormValue("description")
-	if description != "" {
-		newTodo := Todo{
-			ID:          nextID,
-			Description: description,
-			Completed:   false,
-		}
-		nextID++
-		todos = append(todos, newTodo)
+	if description == "" {
+		return
 	}
+	newTodo := Todo{
+		ID:          nextID,
+		Description: description,
+		Completed:   false,
+	}
+	nextID++
+	todos = append(todos, newTodo)
 }
 
-func TogleTodo(r *http.Request) {
+func handleToggleTodo(r *http.Request) {
 	toggleID := r.FormValue("toggle")
-	if toggleID != "" {
-		id, err := strconv.Atoi(toggleID)
-		if err == nil {
-			for i, todo := range todos {
-				if todo.ID == id {
-					todos[i].Completed = !todo.Completed
-					break
-				}
-			}
+	if toggleID == "" {
+		return
+	}
+	id, err := strconv.Atoi(toggleID)
+	if err != nil {
+		fmt.Printf("Error converting toggleID to int: %v\n", err)
+		return
+	}
+
+	for i, todo := range todos {
+		if todo.ID == id {
+			todos[i].Completed = !todo.Completed
+			break
 		}
 	}
+
 }
 
-func DeleteTodo(r *http.Request) {
+func handleDeleteTodo(r *http.Request) {
 	deleteID := r.FormValue("delete")
-	if deleteID != "" {
-		id, err := strconv.Atoi(deleteID)
-		if err == nil {
-			for i, todo := range todos {
-				if todo.ID == id {
-					todos = append(todos[:i], todos[i+1:]...)
-					break
-				}
-			}
+
+	if deleteID == "" {
+		return
+	}
+	id, err := strconv.Atoi(deleteID)
+	if err != nil {
+		fmt.Printf("Error converting deleteID to int: %v\n", err)
+		return
+	}
+	for i, todo := range todos {
+		if todo.ID == id {
+			todos = append(todos[:i], todos[i+1:]...)
+			break
 		}
 	}
 }
@@ -90,6 +100,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, data PageData) {
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		fmt.Println(err)
+		return
 	}
 }
 
